@@ -1,0 +1,23 @@
+---
+// Тарифы генерируются из src/data/pricing.json — копии единого источника minidesk/bilem-dev/pricing.json
+// (обновляется `npm run sync-pricing`). Руками цены здесь не правим.
+import data from '../data/pricing.json';
+const lang = 'ru';
+const fmt = (n: number) => n.toLocaleString('ru-RU').replace(/ /g, ' ');
+const t = (v: any) => (v && typeof v === 'object' ? v[lang] ?? '' : v ?? '');
+const plans = data.plans;
+---
+<div class="plans">
+	{plans.map((p: any) => (
+		<div class:list={['plan', { hi: p.hi }]}>
+			<h3>{p.name}{p.badge && <span class="badge">{t(p.badge)}</span>}</h3>
+			<p class="tag">{t(p.tagline)}</p>
+			<p class="price">{p.price_mo ? `${fmt(p.price_mo)} ${data.currency}/мес` : t(p.price_label)}</p>
+			<p class="per">{t(p.per)}</p>
+			{p.price_yr_mo && <p class="yr">При оплате за год — {fmt(p.price_yr_mo)} {data.currency}/мес</p>}
+			<ul>{(p.features?.length ? p.features : p.overview || []).map((f: any) => <li>{t(f)}</li>)}</ul>
+		</div>
+	))}
+</div>
+<p set:html={t(data.note).replace(/href="\//g, 'href="https://bilem.ai/')} />
+<p><small>Тарифы от {data.version}. Источник — единый прайс Bilem; на сайте и в кабинете те же цифры.</small></p>
