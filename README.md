@@ -31,3 +31,8 @@ npm run build        # dist/ + /llms.txt, /llms-full.txt, /llms-small.txt
 Перед каждым push — `npm run guard` (скрипт `scripts/guard.sh`), он должен быть пустым. Шаблоны сторожа — в скрипте.
 
 Типографика: «ёлочки», длинное тире —, суммы с неразрывным пробелом: «1 500 ₸».
+
+## До публичного запуска сайт закрыт от индекса
+
+Временно: `public/robots.txt` — `Disallow: /`, `public/_headers` — `X-Robots-Tag: noindex, nofollow` на все страницы.
+**Перед публичным запуском:** вернуть в `robots.txt` `Allow: /` (и строку `Sitemap: https://docs.bilem.ai/sitemap-index.xml`), удалить `public/_headers`.
