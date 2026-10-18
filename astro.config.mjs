@@ -20,7 +20,6 @@ export default defineConfig({
 			defaultLocale: 'root',
 			locales: {
 				root: { label: 'Русский', lang: 'ru' },
-				kk: { label: 'Қазақша', lang: 'kk' },
 			},
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/skp-kz/bilem.ai' },

@@ -16,7 +16,7 @@ npm run build        # dist/ + /llms.txt, /llms-full.txt, /llms-small.txt
 2. Пункт в `sidebar` в `astro.config.mjs`.
 3. `npm run guard` и `npm run build` — оба без ошибок.
 
-Казахский — `src/content/docs/kk/…`; страницы без перевода автоматически показываются на русском.
+Документация только на русском (решение Славы 18.10); казахской версии нет.
 
 ## Тарифы
 
