@@ -18,7 +18,7 @@ type Step = [string, string, string?];
 type Client = { id: string; n: string; k: string; f: string; c: string; m: string; steps?: Step[]; note?: string; warn?: string; cloud?: boolean };
 
 const CHECK: Step = ['Проверьте', 'Спросите ИИ: «вызови bilem whoami» — он ответит, какие базы 1С видит.'];
-const REMOTE = 'Агент Bilem принимает подключения только со своего компьютера. Если программа работает на другом — сначала <a href="#remote">опубликуйте адрес в своей сети</a> и используйте новый адрес.';
+const REMOTE = 'Агент Bilem принимает подключения только со своего компьютера. Если программа работает на другом — сначала <a href="/connect/tailscale/">откройте его через Tailscale</a> и используйте новый адрес.';
 
 const C: Client[] = [
 	{ id: 'claude-desktop', n: 'Claude Desktop', k: 'чат · Anthropic', f: 'chat', c: '#c96442', m: 'CD',

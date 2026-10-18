@@ -8,7 +8,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'Bilem',
-			description: 'Документация Bilem — персональный агент для вашей 1С: WhatsApp, Telegram, ChatGPT и Claude отвечают по данным вашей базы.',
+			description: 'Документация Bilem — персональный агент для вашей 1С. Bilem Agent подключает базу 1С к Claude, Cursor, OpenClaw и другим ИИ по MCP; ChatGPT, телефон и мессенджеры — через Bilem Cloud.',
 			logo: { light: './src/assets/mark.svg', dark: './src/assets/mark.svg', alt: 'Bilem' },
 			favicon: '/favicon.ico',
 			head: [
@@ -28,7 +28,15 @@ export default defineConfig({
 			customCss: ['./src/styles/bilem.css'],
 			sidebar: [
 				{ label: 'Что такое Bilem', link: '/' },
-				{ label: 'Подключение', link: '/connect/' },
+				{ label: 'Установка', link: '/install/' },
+				{
+					label: 'Подключение',
+					items: [
+						{ label: 'Агенты (MCP)', link: '/connect/' },
+						{ label: 'Скилл Bilem', link: '/connect/skill/' },
+						{ label: 'Tailscale', link: '/connect/tailscale/' },
+					],
+				},
 				{ label: 'Инструменты', link: '/tools/' },
 				{ label: 'Безопасность', link: '/security/' },
 				{ label: 'Тарифы', link: '/pricing/' },
@@ -38,7 +46,7 @@ export default defineConfig({
 			plugins: [
 				starlightLlmsTxt({
 					projectName: 'Bilem',
-					description: 'Bilem — агент для 1С:Бухгалтерии для Казахстана. Отвечает директору в WhatsApp, Telegram, ChatGPT и Claude по данным его базы 1С; только чтение.',
+					description: 'Bilem — агент для 1С:Бухгалтерии для Казахстана. Bilem Agent (Windows, открытый код) — MCP-сервер рядом с 1С: читает базу через OData только на этом компьютере, печатает счета, доверенности и акты сверки, отправляет их по почте после подтверждения человеком; учёт не меняет. Bilem Cloud — ChatGPT, телефон, WhatsApp и Telegram по подписке.',
 				}),
 			],
 		}),
