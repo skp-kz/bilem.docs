@@ -1,0 +1,344 @@
+---
+// Выбор программы на странице «Подключение агентов» (/connect/).
+// Инструкции рендерятся на сервере (видны без JS и поисковикам), скрипт только переключает карточки.
+// Цена облака — из src/data/pricing.json (минимальная платная), руками не пишем.
+import data from '../data/pricing.json';
+
+const fmt = (n: number) => n.toLocaleString('ru-RU').replace(/\s/g, ' ');
+const minPrice = Math.min(...data.plans.map((p: any) => p.price_mo).filter((n: any) => typeof n === 'number'));
+const cloudFrom = `от ${fmt(minPrice)} ${data.currency}`;
+
+const URL_TXT = 'http://127.0.0.1:8796/mcp/ВАШ_ТОКЕН';
+const U = URL_TXT.replace('ВАШ_ТОКЕН', '<span class="bc-key">ВАШ_ТОКЕН</span>');
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+// код: экранируем, потом подсвечиваем ключ
+const code = (s: string) => esc(s).replace(/ВАШ_ТОКЕН/g, '<span class="bc-key">ВАШ_ТОКЕН</span>');
+
+type Step = [string, string, string?];
+type Client = { id: string; n: string; k: string; f: string; c: string; m: string; steps?: Step[]; note?: string; warn?: string; cloud?: boolean };
+
+const CHECK: Step = ['Проверьте', 'Спросите ИИ: «вызови bilem whoami» — он ответит, какие базы 1С видит.'];
+const REMOTE = 'Агент Bilem принимает подключения только со своего компьютера. Если программа работает на другом — сначала <a href="#remote">опубликуйте адрес в своей сети</a> и используйте новый адрес.';
+
+const C: Client[] = [
+	{ id: 'claude-desktop', n: 'Claude Desktop', k: 'чат · Anthropic', f: 'chat', c: '#c96442', m: 'CD',
+		steps: [
+			['Откройте настройки', 'Claude Desktop → Settings → Developer → <b>Edit Config</b>. Откроется файл <code>claude_desktop_config.json</code>.'],
+			['Добавьте Bilem', 'Нужен <a href="https://nodejs.org" target="_blank" rel="noopener">Node.js</a>. Вставьте в файл и сохраните:', `{
+  "mcpServers": {
+    "bilem": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "${URL_TXT}"]
+    }
+  }
+}`],
+			['Перезапустите Claude Desktop', 'Полностью закройте (в трее — Quit) и откройте снова.'],
+			CHECK,
+		],
+		note: 'Если в файле уже есть <code>mcpServers</code> — добавьте блок <code>bilem</code> внутрь, рядом с остальными.' },
+	{ id: 'claude-code', n: 'Claude Code', k: 'терминал · Anthropic', f: 'cli', c: '#d97757', m: 'CC',
+		steps: [
+			['Выполните команду', 'В любой папке:', `claude mcp add --scope user --transport http bilem ${URL_TXT}`],
+			['Проверьте подключение', '<code>claude mcp list</code> — у bilem должно быть «connected».'],
+			CHECK,
+		],
+		note: '<code>--scope user</code> — Bilem будет виден во всех папках, а не только в текущей.' },
+	{ id: 'cursor', n: 'Cursor', k: 'редактор кода', f: 'ide', c: '#2b2b2b', m: 'Cu',
+		steps: [
+			['Откройте настройки MCP', 'Cursor → Settings → <b>Tools &amp; MCP</b> → New MCP Server (файл <code>~/.cursor/mcp.json</code>).'],
+			['Добавьте Bilem', '', `{
+  "mcpServers": {
+    "bilem": { "url": "${URL_TXT}" }
+  }
+}`],
+			CHECK,
+		] },
+	{ id: 'vscode', n: 'VS Code', k: 'GitHub Copilot', f: 'ide', c: '#0b7bd4', m: 'VS',
+		steps: [
+			['Откройте настройки MCP', 'Палитра команд (Ctrl+Shift+P) → <b>MCP: Open User Configuration</b>.'],
+			['Добавьте Bilem', '', `{
+  "servers": {
+    "bilem": { "type": "http", "url": "${URL_TXT}" }
+  }
+}`],
+			['Включите инструменты', 'Copilot Chat → режим <b>Agent</b> → значок инструментов → отметьте bilem.'],
+			CHECK,
+		] },
+	{ id: 'visual-studio', n: 'Visual Studio', k: 'GitHub Copilot', f: 'ide', c: '#6c3fb5', m: 'VS',
+		steps: [
+			['Создайте файл', 'Visual Studio 2022 17.14 и новее. Файл <code>%USERPROFILE%\\.mcp.json</code>:', `{
+  "servers": {
+    "bilem": { "type": "http", "url": "${URL_TXT}" }
+  }
+}`],
+			['Включите инструменты', 'Copilot Chat → режим <b>Agent</b> → инструменты → bilem.'],
+			CHECK,
+		] },
+	{ id: 'windsurf', n: 'Windsurf', k: 'редактор кода', f: 'ide', c: '#0f8f7d', m: 'Ws',
+		steps: [
+			['Откройте настройки MCP', 'Cascade → значок MCP → <b>View raw config</b> (файл <code>mcp_config.json</code>).'],
+			['Добавьте Bilem', '', `{
+  "mcpServers": {
+    "bilem": { "serverUrl": "${URL_TXT}" }
+  }
+}`],
+			CHECK,
+		] },
+	{ id: 'cline', n: 'Cline', k: 'расширение VS Code', f: 'ide', c: '#5b6470', m: 'Cl',
+		steps: [
+			['Откройте серверы MCP', 'Панель Cline → значок <b>MCP Servers</b> → вкладка <b>Remote Servers</b>.'],
+			['Добавьте Bilem', 'Server Name — <code>bilem</code>, Server URL — адрес из Bilem Agent, транспорт — Streamable HTTP → <b>Add Server</b>.'],
+			CHECK,
+		] },
+	{ id: 'continue', n: 'Continue', k: 'расширение VS Code / JetBrains', f: 'ide', c: '#4b5563', m: 'Co',
+		steps: [
+			['Откройте config.yaml', 'Continue → настройки → <b>Open config</b>.'],
+			['Добавьте Bilem', '', `mcpServers:
+  - name: bilem
+    type: streamable-http
+    url: ${URL_TXT}`],
+			CHECK,
+		] },
+	{ id: 'xcode', n: 'Xcode', k: 'Apple · Claude Agent', f: 'ide', c: '#1f8ef1', m: 'Xc',
+		steps: [
+			['Включите агента', 'Xcode 26.3 и новее → Settings → <b>Intelligence</b> → Anthropic.'],
+			['Добавьте Bilem', 'В файл <code>~/Library/Developer/Xcode/CodingAssistant/ClaudeAgentConfig/.claude.json</code>, в раздел <code>mcpServers</code>:', `"bilem": { "type": "http", "url": "${URL_TXT}" }`],
+			['Перезапустите Xcode', ''],
+			CHECK,
+		],
+		warn: 'Xcode работает на Mac, а Bilem Agent — на Windows. ' + REMOTE },
+	{ id: 'zed', n: 'Zed', k: 'редактор кода', f: 'ide', c: '#3a4a8c', m: 'Ze' },
+	{ id: 'jetbrains', n: 'JetBrains', k: 'AI Assistant', f: 'ide', c: '#d6336c', m: 'JB' },
+	{ id: 'codex', n: 'Codex CLI', k: 'терминал · OpenAI', f: 'cli', c: '#10a37f', m: 'Cx',
+		steps: [
+			['Добавьте в config.toml', 'Файл <code>~/.codex/config.toml</code>:', `[mcp_servers.bilem]
+url = "${URL_TXT}"`],
+			['Проверьте подключение', '<code>codex mcp list</code>'],
+			CHECK,
+		] },
+	{ id: 'gemini-cli', n: 'Gemini CLI', k: 'терминал · Google', f: 'cli', c: '#4f6bed', m: 'Ge',
+		steps: [
+			['Выполните команду', '', `gemini mcp add --transport http bilem ${URL_TXT}`],
+			['Проверьте подключение', 'В сессии Gemini CLI: <code>/mcp</code>.'],
+			CHECK,
+		] },
+	{ id: 'opencode', n: 'OpenCode', k: 'терминал', f: 'cli', c: '#3d3d3d', m: 'OC',
+		steps: [
+			['Добавьте в opencode.json', 'Файл <code>~/.config/opencode/opencode.json</code>:', `{
+  "mcp": {
+    "bilem": { "type": "remote", "url": "${URL_TXT}" }
+  }
+}`],
+			CHECK,
+		] },
+	{ id: 'goose', n: 'Goose', k: 'терминал и приложение', f: 'cli', c: '#7a5c3c', m: 'Go',
+		steps: [
+			['Добавьте расширение', 'Терминал: <code>goose configure</code> → Add Extension → <b>Remote Extension (Streamable HTTP)</b>. Приложение: Extensions → Add custom extension → тип Streamable HTTP.'],
+			['Укажите адрес', 'Имя — <code>bilem</code>, адрес — из Bilem Agent.'],
+			CHECK,
+		] },
+	{ id: 'openclaw', n: 'OpenClaw', k: 'агент · WhatsApp, Telegram', f: 'agent', c: '#e8453c', m: 'OW',
+		steps: [
+			['Добавьте сервер', 'На машине, где работает OpenClaw:', `openclaw mcp add bilem --transport streamable-http --url ${URL_TXT}`],
+			['Проверьте подключение', '<code>openclaw mcp doctor bilem --probe</code>. Или в Control UI: Settings → MCP.'],
+			['Спросите агента', 'В WhatsApp или Telegram: «вызови bilem whoami».'],
+		],
+		warn: 'Ваш агент отвечает людям в мессенджерах — проверьте, кому он разрешает писать, прежде чем давать ему доступ к 1С. ' + REMOTE },
+	{ id: 'hermes', n: 'Hermes', k: 'агент · мессенджеры', f: 'agent', c: '#7a52c7', m: 'He',
+		steps: [
+			['Добавьте в config.yaml', 'Файл <code>~/.hermes/config.yaml</code>:', `mcp_servers:
+  bilem:
+    url: "${URL_TXT}"`],
+			['Перезапустите Hermes', 'Инструменты MCP подключаются при запуске.'],
+			['Спросите агента', '«вызови bilem whoami».'],
+		],
+		warn: 'Проверьте, кому агент разрешает писать, прежде чем давать ему доступ к 1С. ' + REMOTE },
+	{ id: 'n8n', n: 'n8n', k: 'автоматизации', f: 'agent', c: '#ea4b71', m: 'n8',
+		steps: [
+			['Добавьте узел', 'В AI Agent добавьте инструмент <b>MCP Client Tool</b>.'],
+			['Настройте', 'Endpoint — адрес из Bilem Agent, Server Transport — <b>HTTP Streamable</b>, Authentication — None.'],
+			CHECK,
+		],
+		warn: REMOTE },
+	{ id: 'lm-studio', n: 'LM Studio', k: 'локальные модели', f: 'local', c: '#4338ca', m: 'LM',
+		steps: [
+			['Откройте mcp.json', 'Правая панель → <b>Program</b> → Install → <b>Edit mcp.json</b>.'],
+			['Добавьте Bilem', '', `{
+  "mcpServers": {
+    "bilem": { "url": "${URL_TXT}" }
+  }
+}`],
+			CHECK,
+		],
+		note: 'Нужна модель с поддержкой инструментов (tool use).' },
+	{ id: 'jan', n: 'Jan', k: 'локальные модели', f: 'local', c: '#111827', m: 'Ja' },
+	{ id: 'anythingllm', n: 'AnythingLLM', k: 'локальные модели', f: 'local', c: '#0e7490', m: 'AL' },
+	{ id: 'other', n: 'Другая программа', k: 'любая с MCP по HTTP', f: 'all', c: '#8a948f', m: '+',
+		steps: [
+			['Найдите раздел MCP', 'Обычно Settings → MCP / Tools / Extensions / Connectors.'],
+			['Добавьте сервер', 'Имя — <code>bilem</code>, тип — <b>Streamable HTTP</b> (бывает «HTTP» или «URL»), адрес:', URL_TXT],
+			CHECK,
+		],
+		note: 'Программа умеет MCP только через команду (stdio)? Используйте мост: <code>npx -y mcp-remote &lt;адрес&gt;</code> — как в инструкции для Claude Desktop.' },
+	// Bilem Cloud — коммерческая версия
+	{ id: 'chatgpt', n: 'ChatGPT', k: 'сайт и телефон', f: 'cloud', c: '#10a37f', m: 'GP', cloud: true },
+	{ id: 'claude-ai', n: 'Claude', k: 'claude.ai и телефон', f: 'cloud', c: '#c96442', m: 'Ca', cloud: true },
+	{ id: 'gemini', n: 'Gemini', k: 'сайт и телефон', f: 'cloud', c: '#4f6bed', m: 'Gm', cloud: true },
+	{ id: 'telegram', n: 'Telegram', k: 'бот Bilem', f: 'cloud', c: '#229ed9', m: 'Tg', cloud: true },
+	{ id: 'whatsapp', n: 'WhatsApp', k: 'агент Bilem', f: 'cloud', c: '#1faf5a', m: 'WA', cloud: true },
+	{ id: 'teams', n: 'Microsoft Teams', k: 'для команд', f: 'cloud', c: '#5b5fc7', m: 'Te', cloud: true },
+	{ id: 'slack', n: 'Slack', k: 'для команд', f: 'cloud', c: '#4a154b', m: 'Sl', cloud: true },
+];
+
+const free = C.filter((x) => !x.cloud);
+const paid = C.filter((x) => x.cloud);
+const FILTERS = [
+	['all', 'Все'], ['chat', 'Чат-приложения'], ['ide', 'Редакторы кода'], ['cli', 'Агенты в терминале'], ['agent', 'Ассистенты 24/7'], ['local', 'Локальные модели'],
+];
+const DEFAULT = 'claude-desktop';
+
+function body(x: Client): string {
+	if (x.cloud) {
+		return `<div class="bc-note"><b>${x.n} работает в интернете и не видит ваш компьютер.</b> Поэтому подключение — через <b>Bilem Cloud</b>, коммерческую версию по подписке: агент на вашем сервере сам соединяется с облаком, база наружу не открывается, вход — по учётной записи.</div>
+<p class="bc-links"><a href="/pricing/">Тарифы Bilem Cloud →</a></p>`;
+	}
+	if (!x.steps) {
+		return `<p>Проверенная инструкция для ${x.n} готовится. Пока подключайте по образцу «<a href="#other" data-pick="other">Другая программа</a>»: в настройках MCP добавьте сервер типа <b>Streamable HTTP</b> с именем <code>bilem</code> и адресом из Bilem Agent.</p>`;
+	}
+	let h = '<ol class="bc-steps">' + x.steps.map(([t, d, c]) =>
+		`<li><b>${t}</b>${d ? `<span>${d}</span>` : ''}${c ? `<div class="bc-code"><button type="button" class="bc-copy" data-copy="${esc(c)}">Копировать</button><pre>${code(c)}</pre></div>` : ''}</li>`).join('') + '</ol>';
+	if (x.note) h += `<div class="bc-note">${x.note}</div>`;
+	if (x.warn) h += `<div class="bc-note bc-warn">${x.warn}</div>`;
+	return h;
+}
+const tile = (x: Client) => `<button type="button" class="bc-card" data-id="${x.id}" data-f="${x.f}"><span class="bc-mono" style="background:${x.c}">${x.m}</span><span><span class="bc-n">${x.n}</span><span class="bc-k">${x.k}</span></span></button>`;
+---
+<div class="bc not-content">
+	<div class="bc-chips" role="tablist" aria-label="Тип программы">
+		{FILTERS.map(([f, l], i) => <button type="button" class:list={['bc-chip', { on: i === 0 }]} data-filter={f}>{l}</button>)}
+	</div>
+	<div class="bc-free">Бесплатно · открытый код · ваш ключ LLM</div>
+	<div class="bc-grid" id="bc-free" set:html={free.map(tile).join('')} />
+
+	<div class="bc-panels" id="bc-panels">
+		{C.map((x) => (
+			<section class="bc-panel" id={x.id} data-panel={x.id} hidden={x.id !== DEFAULT}>
+				<div class="bc-ph">
+					<span class="bc-mono bc-mono-l" style={`background:${x.c}`}>{x.m}</span>
+					<div><h3>{x.n}</h3><div class="bc-k">{x.k}</div></div>
+					<span class:list={['bc-badge', { pay: x.cloud }]}>{x.cloud ? 'Bilem Cloud · платно' : 'Бесплатно'}</span>
+				</div>
+				<div class="bc-pb" set:html={body(x)} />
+			</section>
+		))}
+	</div>
+
+	<div class="bc-cloud">
+		<div class="bc-cloud-h">
+			<div>
+				<div class="bc-cloud-t">С телефона и из мессенджеров — <span>Bilem Cloud</span></div>
+				<div class="bc-cloud-s">Коммерческая версия, по платной подписке. ChatGPT, Claude на телефоне, Telegram и WhatsApp видят вашу 1С через облако Bilem — база наружу не открывается, вход по учётной записи.</div>
+			</div>
+			<div class="bc-price">{cloudFrom}<small>в месяц</small><a href="/pricing/">Тарифы →</a></div>
+		</div>
+		<div class="bc-grid" id="bc-paid" set:html={paid.map(tile).join('')} />
+	</div>
+</div>
+
+<script>
+	const root = document.querySelector('.bc');
+	if (root) {
+		const cards = () => root.querySelectorAll<HTMLElement>('.bc-card');
+		const show = (id: string, scroll: boolean) => {
+			const panel = root.querySelector<HTMLElement>(`[data-panel="${id}"]`);
+			if (!panel) return;
+			root.querySelectorAll<HTMLElement>('.bc-panel').forEach((p) => (p.hidden = p !== panel));
+			cards().forEach((c) => c.classList.toggle('on', c.dataset.id === id));
+			if (scroll) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+		};
+		const pick = (id: string, scroll = true) => {
+			history.replaceState(null, '', `#${id}`);
+			show(id, scroll);
+		};
+		root.addEventListener('click', async (e) => {
+			const t = e.target as HTMLElement;
+			const card = t.closest<HTMLElement>('.bc-card');
+			if (card?.dataset.id) return pick(card.dataset.id);
+			const link = t.closest<HTMLElement>('[data-pick]');
+			if (link?.dataset.pick) { e.preventDefault(); return pick(link.dataset.pick); }
+			const chip = t.closest<HTMLElement>('.bc-chip');
+			if (chip) {
+				const f = chip.dataset.filter || 'all';
+				root.querySelectorAll('.bc-chip').forEach((c) => c.classList.toggle('on', c === chip));
+				root.querySelectorAll<HTMLElement>('#bc-free .bc-card').forEach((c) => {
+					c.hidden = !(f === 'all' || c.dataset.f === f || c.dataset.f === 'all');
+				});
+				return;
+			}
+			const copy = t.closest<HTMLButtonElement>('.bc-copy');
+			if (copy?.dataset.copy) {
+				try { await navigator.clipboard.writeText(copy.dataset.copy); copy.textContent = 'Скопировано'; }
+				catch { copy.textContent = 'Не удалось'; }
+				setTimeout(() => (copy.textContent = 'Копировать'), 1500);
+			}
+		});
+		const fromHash = () => {
+			const id = decodeURIComponent(location.hash.slice(1));
+			if (id && root.querySelector(`[data-panel="${CSS.escape(id)}"]`)) show(id, true);
+			else show(root.querySelector<HTMLElement>('.bc-panel:not([hidden])')?.dataset.panel || 'claude-desktop', false);
+		};
+		window.addEventListener('hashchange', fromHash);
+		fromHash();
+	}
+</script>
+
+<style is:global>
+	.bc { --bc-line: var(--sl-color-gray-5); --bc-bg2: var(--sl-color-gray-7, var(--sl-color-gray-6)); --bc-mute: var(--sl-color-gray-3); margin-top: 1rem; }
+	.bc button { font: inherit; color: inherit; }
+	.bc-chips { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+	.bc-chip { border: 1px solid var(--bc-line); background: transparent; border-radius: 999px; padding: .3rem .8rem; font-size: .85rem; cursor: pointer; }
+	.bc-chip.on { background: var(--sl-color-white); color: var(--sl-color-black) !important; border-color: var(--sl-color-white); }
+	.bc-free { display: inline-block; font-size: .78rem; font-weight: 600; color: var(--sl-color-accent); background: var(--sl-color-accent-low); border-radius: 999px; padding: .2rem .7rem; margin-bottom: .7rem; }
+	.bc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: .6rem; }
+	.bc-card { display: flex; align-items: center; gap: .65rem; text-align: left; border: 1px solid var(--bc-line); border-radius: 12px; padding: .6rem .75rem; background: var(--sl-color-black); cursor: pointer; transition: border-color .12s, box-shadow .12s, transform .12s; }
+	.bc-card:hover { border-color: var(--bilem-green); transform: translateY(-1px); box-shadow: 0 4px 14px rgb(31 175 90 / .12); }
+	.bc-card.on { border-color: var(--sl-color-accent); box-shadow: 0 0 0 1px var(--sl-color-accent); }
+	.bc-card[hidden] { display: none; }
+	.bc-mono { width: 2.1rem; height: 2.1rem; flex: none; border-radius: 9px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font: 700 .8rem/1 system-ui, sans-serif; }
+	.bc-mono-l { width: 2.6rem; height: 2.6rem; font-size: .95rem; border-radius: 11px; }
+	.bc-n { display: block; font-weight: 600; font-size: .9rem; line-height: 1.25; }
+	.bc-k { display: block; font-size: .75rem; color: var(--bc-mute); line-height: 1.3; }
+	.bc-panels { margin-top: 1.2rem; }
+	.bc-panel { border: 1px solid var(--bc-line); border-radius: 14px; overflow: hidden; scroll-margin-top: 5rem; }
+	.bc-panel[hidden] { display: none; }
+	.bc-ph { display: flex; align-items: center; gap: .75rem; padding: .9rem 1.1rem; background: var(--bc-bg2); border-bottom: 1px solid var(--bc-line); }
+	.bc-ph h3 { margin: 0; font-size: 1.2rem; }
+	.bc-badge { margin-left: auto; font-size: .75rem; font-weight: 600; padding: .2rem .6rem; border-radius: 999px; background: var(--sl-color-accent-low); color: var(--sl-color-accent); white-space: nowrap; }
+	.bc-badge.pay { background: var(--bilem-green); color: #fff; }
+	.bc-pb { padding: .4rem 1.3rem 1.2rem; }
+	.bc-pb p { margin: .8rem 0 0; }
+	.bc-pb code { font-size: .85em; }
+	.bc-steps { list-style: none; counter-reset: bc; margin: .9rem 0 0; padding: 0; }
+	.bc-steps > li { counter-increment: bc; position: relative; padding: 0 0 1.1rem 2.4rem; margin: 0 0 0 .8rem; border-left: 2px solid var(--bc-line); }
+	.bc-steps > li:last-child { border-left-color: transparent; padding-bottom: .2rem; }
+	.bc-steps > li::before { content: counter(bc); position: absolute; left: -.85rem; top: -.1rem; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--sl-color-black); border: 2px solid var(--sl-color-accent); color: var(--sl-color-accent); font: 700 .75rem/1.4rem system-ui, sans-serif; text-align: center; }
+	.bc-steps > li > b { display: block; margin-bottom: .2rem; }
+	.bc-code { position: relative; margin-top: .5rem; }
+	.bc-code pre { margin: 0; background: #0e0b08; color: #efe8dc; border-radius: 10px; padding: .75rem 5.5rem .75rem .9rem; font: .8rem/1.55 var(--sl-font-mono); white-space: pre-wrap; word-break: break-all; }
+	.bc-key { color: #ffd479; }
+	.bc-copy { position: absolute; top: .45rem; right: .45rem; font-size: .72rem !important; color: #c9bfb1 !important; background: transparent; border: 1px solid #3a3129; border-radius: 6px; padding: .15rem .5rem; cursor: pointer; }
+	.bc-copy:hover { color: #fff !important; border-color: #6b6055; }
+	.bc-note { margin-top: 1rem; border-left: 3px solid var(--sl-color-accent); background: var(--sl-color-accent-low); padding: .6rem .9rem; border-radius: 0 8px 8px 0; font-size: .9rem; }
+	.bc-warn { border-left-color: #d38a00; background: rgb(211 138 0 / .12); }
+	.bc-links { font-weight: 600; }
+	.bc-cloud { margin-top: 1.8rem; border: 2px solid var(--bilem-green); border-radius: 16px; padding: 1.1rem; background: linear-gradient(180deg, var(--sl-color-accent-low), transparent 75%); }
+	.bc-cloud-h { display: flex; gap: 1rem; align-items: flex-start; margin-bottom: .9rem; }
+	.bc-cloud-t { font: 700 1.2rem/1.3 'Jura', var(--sl-font); }
+	.bc-cloud-t span { color: var(--sl-color-accent); }
+	.bc-cloud-s { color: var(--bc-mute); font-size: .9rem; margin-top: .3rem; max-width: 36rem; }
+	.bc-price { margin-left: auto; text-align: right; font: 700 1.2rem/1.2 'Jura', var(--sl-font); white-space: nowrap; }
+	.bc-price small { display: block; font: 500 .75rem var(--sl-font); color: var(--bc-mute); }
+	.bc-price a { display: inline-block; margin-top: .45rem; font: 600 .82rem var(--sl-font); color: #fff; background: var(--bilem-green); padding: .3rem .75rem; border-radius: 8px; text-decoration: none; }
+	.bc-cloud .bc-k { color: var(--sl-color-accent); }
+	@media (max-width: 50rem) { .bc-cloud-h { flex-direction: column; } .bc-price { margin-left: 0; text-align: left; } }
+</style>
