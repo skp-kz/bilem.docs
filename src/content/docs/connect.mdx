@@ -25,12 +25,13 @@ import ConnectPicker from '../../components/ConnectPicker.astro';
 
 MCP даёт агенту инструменты, а скилл — навык: короткую инструкцию, как ими пользоваться. Всегда называть дату данных, не выдумывать цифры, отправлять документы только после вашего подтверждения, не трогать учёт. С ним агент отвечает одинаково аккуратно в любой программе. Это обычный текстовый файл `SKILL.md`.
 
-<LinkButton href="/skills/bilem.zip" icon="download">Скачать скилл (zip)</LinkButton>
-<LinkButton href="/skills/bilem/SKILL.md" variant="secondary">Открыть SKILL.md</LinkButton>
+<LinkButton href="/skills/bilem/SKILL.md" icon="download" download="SKILL.md">Скачать SKILL.md</LinkButton>
 
-- **Claude Code** — распакуйте в `~/.claude/skills/` (получится `~/.claude/skills/bilem/SKILL.md`).
-- **Claude Desktop и claude.ai** — Settings → Capabilities → Skills → загрузите `bilem.zip`.
-- **OpenClaw, Hermes и другие агенты со скиллами** — положите папку `bilem` в папку скиллов агента и перезапустите его.
+Скилл — это папка `bilem` с этим файлом внутри.
+
+- **Claude Code** — положите файл в `~/.claude/skills/bilem/SKILL.md`.
+- **OpenClaw, Hermes и другие агенты со скиллами** — создайте в папке скиллов агента папку `bilem`, положите в неё `SKILL.md` и перезапустите агента.
+- **Claude Desktop и claude.ai** — Settings → Capabilities → Skills: загрузка принимает архив, поэтому для них есть готовый [bilem.zip](/skills/bilem.zip) — та же папка с тем же файлом.
 - **Агенты без скиллов** — вставьте текст `SKILL.md` в системную инструкцию.
 
 <a id="remote"></a>
