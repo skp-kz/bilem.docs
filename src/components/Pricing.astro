@@ -15,7 +15,7 @@ const plans = data.plans;
 			<p class="price">{p.price_mo ? `${fmt(p.price_mo)} ${data.currency}/мес` : t(p.price_label)}</p>
 			<p class="per">{t(p.per)}</p>
 			{p.price_yr_mo && <p class="yr">При оплате за год — {fmt(p.price_yr_mo)} {data.currency}/мес</p>}
-			<ul>{(p.features?.length ? p.features : p.overview || []).map((f: any) => <li>{t(f)}</li>)}</ul>
+			<ul>{(p.features?.length ? p.features : p.overview || []).filter((f: any) => !f.off).map((f: any) => <li>{t(f)}</li>)}</ul>
 		</div>
 	))}
 </div>
