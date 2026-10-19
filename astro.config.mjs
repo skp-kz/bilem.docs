@@ -45,7 +45,7 @@ export default defineConfig({
 			plugins: [
 				starlightLlmsTxt({
 					projectName: 'Bilem',
-					description: 'Bilem — агент для 1С:Бухгалтерии для Казахстана. Bilem Agent (Windows, открытый код) — MCP-сервер рядом с 1С: читает базу через OData только на этом компьютере, печатает счета, доверенности и акты сверки, отправляет их по почте после подтверждения человеком; учёт не меняет. Bilem Cloud — ChatGPT, телефон, WhatsApp и Telegram по подписке.',
+					description: 'Bilem — агент для 1С:Бухгалтерии для Казахстана. Bilem Agent (Windows, открытый код) — MCP-сервер рядом с 1С: читает базу через OData только на этом компьютере, печатает счета, доверенности и акты сверки, отправляет их по почте; учёт не меняет. Bilem Cloud — ChatGPT, телефон, WhatsApp и Telegram по подписке.',
 				}),
 			],
 		}),
